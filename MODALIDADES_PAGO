@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGSSS Colombia · Financiamiento en Salud</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#ffffff; --blue:#1a6fad; --blue-light:#e8f4fc; --blue-mid:#4a9fd4;
+  --orange:#e07b39; --orange-light:#fdf0e7;
+  --red:#c0392b; --red-light:#fdecea;
+  --green:#27ae60; --green-light:#eafaf1;
+  --gray:#64748b; --gray-light:#f1f5f9;
+  --text:#1e293b; --text-light:#64748b;
+  --border:#e2e8f0; --shadow:0 4px 24px rgba(26,111,173,0.10);
+}
+html,body{ width:100%;height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);overflow:hidden; }
+
+#canvas{ position:fixed;inset:0;z-index:0;pointer-events:none; }
+
+#deck{ position:relative;z-index:1;width:100vw;height:100vh;overflow:hidden; }
+
+.slide{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  padding:52px 72px 80px;
+  opacity:0;transform:translateY(40px) scale(0.98);
+  transition:all 0.65s cubic-bezier(0.22,1,0.36,1);
+  pointer-events:none;text-align:center;
+}
+.slide.active{ opacity:1;transform:none;pointer-events:all; }
+.slide.out{ opacity:0;transform:translateY(-40px) scale(0.98); }
+
+/* COVER */
+.cover-tag{
+  font-size:11px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--blue);font-weight:600;
+  padding:6px 18px;border:1.5px solid var(--blue);border-radius:100px;
+  display:inline-block;margin-bottom:26px;
+  animation:fadeUp 0.6s 0.2s both;
+}
+.cover-h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(44px,6.5vw,84px);font-weight:900;line-height:1.0;
+  color:var(--text);margin-bottom:10px;
+  animation:fadeUp 0.6s 0.35s both;
+}
+.cover-h1 span{color:var(--blue);}
+.cover-sub{
+  font-size:17px;color:var(--text-light);font-weight:300;
+  margin-bottom:36px;max-width:520px;
+  animation:fadeUp 0.6s 0.5s both;
+}
+.cover-chips{
+  display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp 0.6s 0.65s both;
+}
+.chip{
+  padding:10px 24px;border-radius:100px;font-size:13px;font-weight:500;
+  cursor:pointer;border:none;transition:all 0.25s;font-family:'Outfit',sans-serif;
+}
+.chip-blue{background:var(--blue);color:#fff;}
+.chip-blue:hover{background:#1558a0;transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,111,173,0.3);}
+.chip-outline{background:transparent;color:var(--blue);border:1.5px solid var(--blue);}
+.chip-outline:hover{background:var(--blue-light);}
+
+/* SECTION HEADINGS */
+.s-tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:12px;}
+.s-title{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,52px);font-weight:900;line-height:1.1;color:var(--text);margin-bottom:6px;}
+.s-title span{color:var(--blue);}
+.s-sub{font-size:14px;color:var(--text-light);margin-bottom:28px;max-width:580px;}
+
+/* CARDS */
+.cards{display:flex;gap:16px;width:100%;max-width:880px;}
+.card{
+  flex:1;background:#fff;border:1.5px solid var(--border);
+  border-radius:20px;padding:24px 20px;text-align:left;
+  position:relative;overflow:hidden;
+  transition:transform 0.3s,box-shadow 0.3s,border-color 0.3s;
+}
+.card:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:var(--blue-mid);}
+.card-accent{position:absolute;top:0;left:0;right:0;height:4px;border-radius:20px 20px 0 0;}
+.ca-blue{background:linear-gradient(90deg,var(--blue),var(--blue-mid));}
+.ca-orange{background:linear-gradient(90deg,var(--orange),#f4a261);}
+.ca-green{background:linear-gradient(90deg,var(--green),#52d68a);}
+.ca-red{background:linear-gradient(90deg,var(--red),#e74c3c);}
+.ca-purple{background:linear-gradient(90deg,#8b5cf6,#a78bfa);}
+.card-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px;}
+.ci-blue{background:var(--blue-light);}
+.ci-orange{background:var(--orange-light);}
+.ci-green{background:var(--green-light);}
+.ci-red{background:var(--red-light);}
+.ci-purple{background:#f3f0ff;}
+.card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.card-body{font-size:12.5px;color:var(--text-light);line-height:1.6;}
+
+/* FLOW */
+.flow{display:flex;align-items:center;width:100%;max-width:880px;}
+.flow-box{
+  flex:1;background:#fff;border:1.5px solid var(--border);
+  border-radius:14px;padding:16px 12px;text-align:center;
+  transition:all 0.3s;
+}
+.flow-box:hover{border-color:var(--blue);background:var(--blue-light);transform:scale(1.04);}
+.fb-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:5px;}
+.fb-val{font-size:13px;font-weight:600;color:var(--text);}
+.fb-sub{font-size:11px;color:var(--text-light);margin-top:2px;}
+.flow-arrow{font-size:18px;color:var(--blue-mid);padding:0 6px;flex-shrink:0;}
+
+/* STAT ROW */
+.stat-row{display:flex;gap:14px;justify-content:center;width:100%;max-width:880px;margin-bottom:20px;}
+.stat-pill{flex:1;border-radius:16px;padding:18px 14px;text-align:center;border:1.5px solid var(--border);background:#fff;transition:transform 0.3s;}
+.stat-pill:hover{transform:translateY(-4px);box-shadow:var(--shadow);}
+.sp-val{font-family:'Playfair Display',serif;font-size:clamp(20px,2.5vw,32px);font-weight:900;line-height:1;margin-bottom:4px;}
+.sp-label{font-size:11.5px;color:var(--text-light);}
+
+/* TABS */
+.tabs-wrap{width:100%;max-width:880px;}
+.tab-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px;}
+.tab-btn{
+  padding:8px 18px;border-radius:100px;font-size:12.5px;font-weight:500;
+  font-family:'Outfit',sans-serif;cursor:pointer;
+  border:1.5px solid var(--border);background:#fff;color:var(--text-light);
+  transition:all 0.25s;
+}
+.tab-btn:hover{border-color:var(--blue);color:var(--blue);}
+.tab-btn.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
+.tab-panel{display:none;animation:fadeUp 0.35s ease both;}
+.tab-panel.on{display:flex;gap:14px;}
+.tp-left,.tp-right{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:18px;padding:22px 20px;text-align:left;}
+.tp-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.tp-def{font-size:13px;color:var(--text-light);line-height:1.6;margin-bottom:12px;}
+.tp-divider{height:1px;background:var(--border);margin:10px 0;}
+.pro-con{display:flex;flex-direction:column;gap:7px;}
+.pro-item,.con-item{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.5;}
+.pro-item{color:var(--green);}
+.con-item{color:var(--red);}
+.pro-item strong,.con-item strong{flex-shrink:0;}
+.tp-badge{display:inline-block;padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;margin-top:8px;}
+.tb-blue{background:var(--blue-light);color:var(--blue);}
+.tb-orange{background:var(--orange-light);color:var(--orange);}
+.tb-green{background:var(--green-light);color:var(--green);}
+
+/* CHALLENGE GRID */
+.challenges{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;width:100%;max-width:880px;}
+.ch-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:16px;
+  padding:18px 16px;text-align:left;transition:all 0.3s;position:relative;overflow:hidden;
+}
+.ch-card:hover{transform:translateY(-5px);box-shadow:var(--shadow);}
+.ch-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;line-height:1;margin-bottom:6px;opacity:0.1;position:absolute;top:8px;right:12px;}
+.ch-icon{font-size:22px;margin-bottom:6px;}
+.ch-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.ch-body{font-size:12px;color:var(--text-light);line-height:1.55;}
+
+/* CONCLUSIONS */
+.concl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:880px;}
+.concl-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:18px;
+  padding:20px 18px;text-align:left;transition:all 0.3s;
+}
+.concl-card:hover{border-color:var(--blue);transform:translateY(-4px);box-shadow:var(--shadow);}
+.concl-num{font-size:10px;font-weight:700;color:var(--blue);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.concl-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.concl-body{font-size:12.5px;color:var(--text-light);line-height:1.55;}
+
+/* NAV */
+#nav{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);
+  border:1.5px solid var(--border);border-radius:100px;padding:10px 20px;
+  box-shadow:0 8px 32px rgba(26,111,173,0.12);
+}
+.nb{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:#fff;color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:'Outfit',sans-serif;}
+.nb:hover:not(:disabled){background:var(--blue);color:#fff;border-color:var(--blue);}
+.nb:disabled{opacity:0.3;cursor:not-allowed;}
+#ctr{font-size:12.5px;color:var(--text-light);min-width:48px;text-align:center;}
+.dots-row{display:flex;gap:5px;}
+.dot{width:7px;height:7px;border-radius:50%;background:#dde4ed;cursor:pointer;transition:all 0.25s;}
+.dot.on{background:var(--blue);width:20px;border-radius:4px;}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+.a1{animation:fadeUp 0.5s 0.1s both;}
+.a2{animation:fadeUp 0.5s 0.2s both;}
+.a3{animation:fadeUp 0.5s 0.3s both;}
+.a4{animation:fadeUp 0.5s 0.4s both;}
+.a5{animation:fadeUp 0.5s 0.5s both;}
+
+/* HELPERS */
+.hl-blue{color:var(--blue);font-weight:600;}
+.hl-red{color:var(--red);font-weight:600;}
+.hl-green{color:var(--green);font-weight:600;}
+.hl-orange{color:var(--orange);font-weight:600;}
+.info-box{
+  max-width:880px;background:var(--blue-light);border:1.5px solid var(--blue);
+  border-radius:16px;padding:16px 24px;text-align:left;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="deck">
+
+  <!-- SLIDE 0 · PORTADA -->
+  <div class="slide active" id="s0">
+    <div class="cover-tag">Colombia · SGSSS · 2025</div>
+    <h1 class="cover-h1">Financiamiento<br><span>en Salud</span></h1>
+    <p class="cover-sub">Modalidades de pago, modelo colombiano y desafíos del sistema</p>
+    <div class="cover-chips">
+      <button class="chip chip-blue" onclick="goTo(1)">Comenzar →</button>
+      <button class="chip chip-outline" onclick="goTo(3)">Modalidades de pago</button>
+      <button class="chip chip-outline" onclick="goTo(5)">Desafíos financieros</button>
+    </div>
+  </div>
+
+  <!-- SLIDE 1 · INTRODUCCIÓN -->
+  <div class="slide" id="s1">
+    <div class="s-tag a1">01 · Introducción</div>
+    <h2 class="s-title a2">¿Qué es el <span>financiamiento</span> en salud?</h2>
+    <p class="s-sub a3">Movilizar, acumular y asignar recursos para que toda la población acceda a servicios sin barreras financieras.</p>
+
+    <div class="cards a4">
+      <div class="card">
+        <div class="card-accent ca-blue"></div>
+        <div class="card-icon ci-blue">🎯</div>
+        <div class="card-title">Objetivo Central</div>
+        <div class="card-body">Garantizar acceso universal a servicios sin que el costo sea una barrera para ningún ciudadano.</div>
+      </div>
+      <div class="card">
+        <div class="card-accent ca-orange"></div>
+        <div class="card-icon ci-orange">⚖️</div>
+        <div class="card-title">Solidaridad</div>
+        <div class="card-body">Los sanos subsidian a los enfermos. Los ricos a los pobres. Los jóvenes a los adultos mayores.</div>
+      </div>
+      <div class="card">
+        <div class="card-accent ca-green"></div>
+        <div class="card-icon ci-green">🔄</div>
+        <div class="card-title">3 Pasos (OMS)</div>
+        <div class="card-body">Recaudación de fondos → Mancomunación del riesgo → Compra de servicios a prestadores.</div>
+      </div>
+    </div>
+
+    <div class="flow a5" style="margin-top:18px;">
+      <div class="flow-box"><div class="fb-label">Fuente</div><div class="fb-val">Cotizaciones + Impuestos</div><div class="fb-sub">Contributivo & fiscal</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Gestor</div><div class="fb-val">ADRES</div><div class="fb-sub">Administra $71B+</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Asegurador</div><div class="fb-val">EPS</div><div class="fb-sub">Reciben UPC</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Prestador</div><div class="fb-val">IPS / Hospitales</div><div class="fb-sub">Brindan la atención</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box"><div class="fb-label">Usuario</div><div class="fb-val">Paciente</div><div class="fb-sub">52M afiliados</div></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 · MODELO COLOMBIA -->
+  <div class="slide" id="s2">
+    <div class="s-tag a1">02 · Modelo Colombia</div>
+    <h2 class="s-title a2">El <span>SGSSS</span></h2>
+    <p class="s-sub a3">Ley 100 de 1993 · Tres regímenes, un sistema de salud universal</p>
+
+    <div class="stat-row a4">
+      <div class="stat-pill"><div class="sp-val" style="color:var(--blue)">$87.9B</div><div class="sp-label">UPC girados 2024</div></div>
+      <div class="stat-pill"><div class="sp-val" style="color:var(--orange)">12.5%</div><div class="sp-label">Cotización s/salario</div></div>
+      <div class="stat-pill"><div class="sp-val" style="color:var(--green)">52M+</div><div class="sp-label">Afiliados SGSSS</div></div>
+      <div class="stat-pill"><div class="sp-val" style="color:var(--red)">17%</div><div class="sp-label">Del Presupuesto Nacional</div></div>
+    </div>
+
+    <div class="cards a5">
+      <div class="card">
+        <div class="card-accent ca-blue"></div>
+        <div class="card-icon ci-blue">💼</div>
+        <div class="card-title">Régimen Contributivo</div>
+        <div class="card-body">Trabajadores formales + empleadores. Cotización del 12.5% del salario. Eligen EPS libremente.</div>
+      </div>
+      <div class="card">
+        <div class="card-accent ca-orange"></div>
+        <div class="card-icon ci-orange">🏛️</div>
+        <div class="card-title">Régimen Subsidiado</div>
+        <div class="card-body">Financiado por el Estado. Para población Sisbénizada sin capacidad de pago. Mismo plan de beneficios.</div>
+      </div>
+      <div class="card">
+        <div class="card-accent ca-green"></div>
+        <div class="card-icon ci-green">⭐</div>
+        <div class="card-title">Régimen Especial</div>
+        <div class="card-body">Fuerzas militares, magisterio y Ecopetrol. Sistemas propios de aseguramiento e independientes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 · MODALIDADES DE PAGO -->
+  <div class="slide" id="s3">
+    <div class="s-tag a1">03 · Modalidades de Pago</div>
+    <h2 class="s-title a2">¿Cómo se <span>paga</span> a los prestadores?</h2>
+
+    <div class="tabs-wrap a3">
+      <div class="tab-row">
+        <button class="tab-btn on"  onclick="tab(this,'tp0')">💊 Capitación</button>
+        <button class="tab-btn"     onclick="tab(this,'tp1')">📋 Por Evento</button>
+        <button class="tab-btn"     onclick="tab(this,'tp2')">📦 Paquete</button>
+        <button class="tab-btn"     onclick="tab(this,'tp3')">🔮 PGP</button>
+        <button class="tab-btn"     onclick="tab(this,'tp4')">🏆 Desempeño</button>
+      </div>
+
+      <div class="tab-panel on" id="tp0">
+        <div class="tp-left">
+          <div class="tp-title">Capitación</div>
+          <p class="tp-def">Pago <strong>fijo por usuario</strong> asignado, sin importar cuántos servicios utilice. Solo aplica para baja complejidad.</p>
+          <span class="tp-badge tb-blue">Pago Prospectivo</span>
+        </div>
+        <div class="tp-right">
+          <div class="tp-title">Ventajas y Riesgos</div>
+          <div class="tp-divider"></div>
+          <div class="pro-con">
+            <div class="pro-item"><strong>✔</strong> Incentiva la prevención y el control de costos</div>
+            <div class="pro-item"><strong>✔</strong> Flujo de caja predecible para el prestador</div>
+            <div class="con-item"><strong>✖</strong> Riesgo de subatención al paciente</div>
+            <div class="con-item"><strong>✖</strong> Limitada a baja complejidad (Ley 1438)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tp1">
+        <div class="tp-left">
+          <div class="tp-title">Pago por Evento</div>
+          <p class="tp-def">Se paga <strong>después de prestar el servicio</strong>, por cada procedimiento o actividad realizada (fee-for-service).</p>
+          <span class="tp-badge tb-orange">Pago Retrospectivo</span>
+        </div>
+        <div class="tp-right">
+          <div class="tp-title">Ventajas y Riesgos</div>
+          <div class="tp-divider"></div>
+          <div class="pro-con">
+            <div class="pro-item"><strong>✔</strong> Pago cercano al costo real del servicio</div>
+            <div class="pro-item"><strong>✔</strong> Incentiva mayor acceso a la atención</div>
+            <div class="con-item"><strong>✖</strong> Genera glosas masivas y procesos lentos</div>
+            <div class="con-item"><strong>✖</strong> Incentiva la sobreutilización de servicios</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tp2">
+        <div class="tp-left">
+          <div class="tp-title">Pago por Paquete / Caso</div>
+          <p class="tp-def">Suma fija pactada de antemano por <strong>cada episodio o caso</strong>: parto institucional, cirugía de catarata, fractura, etc.</p>
+          <span class="tp-badge tb-blue">Pago Prospectivo</span>
+        </div>
+        <div class="tp-right">
+          <div class="tp-title">Ventajas y Riesgos</div>
+          <div class="tp-divider"></div>
+          <div class="pro-con">
+            <div class="pro-item"><strong>✔</strong> Incentiva coordinación del ciclo de atención</div>
+            <div class="pro-item"><strong>✔</strong> Reduce la fragmentación entre prestadores</div>
+            <div class="con-item"><strong>✖</strong> Prestador asume riesgo si el caso es más costoso</div>
+            <div class="con-item"><strong>✖</strong> Requiere nota técnica detallada (Decreto 441/2022)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tp3">
+        <div class="tp-left">
+          <div class="tp-title">Pago Global Prospectivo (PGP)</div>
+          <p class="tp-def">Monto fijo global para atender a <strong>toda una población</strong> durante un período. Transfiere el riesgo financiero al prestador.</p>
+          <span class="tp-badge tb-blue">Pago Prospectivo</span>
+        </div>
+        <div class="tp-right">
+          <div class="tp-title">Ventajas y Riesgos</div>
+          <div class="tp-divider"></div>
+          <div class="pro-con">
+            <div class="pro-item"><strong>✔</strong> Gestión de riesgo poblacional e integral</div>
+            <div class="pro-item"><strong>✔</strong> Costos variables se convierten en fijos</div>
+            <div class="con-item"><strong>✖</strong> Alto riesgo financiero para el prestador</div>
+            <div class="con-item"><strong>✖</strong> Requiere sistemas de información robustos</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tp4">
+        <div class="tp-left">
+          <div class="tp-title">Pago por Desempeño (P4P)</div>
+          <p class="tp-def">Pago base + <strong>incentivo variable</strong> según logro de indicadores de calidad, satisfacción del usuario y resultados clínicos.</p>
+          <span class="tp-badge tb-green">Salud Basada en Valor</span>
+        </div>
+        <div class="tp-right">
+          <div class="tp-title">Ventajas y Riesgos</div>
+          <div class="tp-divider"></div>
+          <div class="pro-con">
+            <div class="pro-item"><strong>✔</strong> Alinea incentivos con calidad real en salud</div>
+            <div class="pro-item"><strong>✔</strong> Promueve mejora continua asistencial</div>
+            <div class="con-item"><strong>✖</strong> Poco desarrollado en Colombia aún</div>
+            <div class="con-item"><strong>✖</strong> Riesgo de medir lo que se paga, no lo que importa</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 · ANÁLISIS COMPARATIVO -->
+  <div class="slide" id="s4">
+    <div class="s-tag a1">04 · Análisis Comparativo</div>
+    <h2 class="s-title a2">¿Cuál modalidad es <span>mejor</span>?</h2>
+    <p class="s-sub a3">Ninguna es perfecta. La clave es combinarlas estratégicamente.</p>
+
+    <div class="cards a4" style="flex-wrap:wrap;max-width:880px;">
+      <div class="card" style="min-width:155px;">
+        <div class="card-accent ca-blue"></div>
+        <div style="font-size:28px;margin-bottom:8px;">💊</div>
+        <div class="card-title">Capitación</div>
+        <div class="card-body">Controla costos.<br><span class="hl-red">Riesgo: subatención</span></div>
+      </div>
+      <div class="card" style="min-width:155px;">
+        <div class="card-accent ca-orange"></div>
+        <div style="font-size:28px;margin-bottom:8px;">📋</div>
+        <div class="card-title">Por Evento</div>
+        <div class="card-body">Garantiza acceso.<br><span class="hl-red">Riesgo: sobrecosto + glosas</span></div>
+      </div>
+      <div class="card" style="min-width:155px;">
+        <div class="card-accent ca-green"></div>
+        <div style="font-size:28px;margin-bottom:8px;">📦</div>
+        <div class="card-title">Paquete / PGP</div>
+        <div class="card-body">Integra la atención.<br><span class="hl-red">Riesgo: complejidad técnica</span></div>
+      </div>
+      <div class="card" style="min-width:155px;">
+        <div class="card-accent ca-purple"></div>
+        <div style="font-size:28px;margin-bottom:8px;">🏆</div>
+        <div class="card-title">Desempeño</div>
+        <div class="card-body">Premia calidad.<br><span class="hl-red">Riesgo: medición compleja</span></div>
+      </div>
+    </div>
+
+    <div class="info-box a5" style="margin-top:20px;">
+      <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:5px;">🔮 Tendencia en Colombia — Recomendación OCDE</div>
+      <div style="font-size:13px;color:var(--text-light);line-height:1.7;">
+        Colombia transita del <span class="hl-orange">pago por evento</span> a modalidades <span class="hl-blue">prospectivas (PGP + paquetes)</span>. El siguiente paso urgente: incorporar el <span class="hl-green">pago por desempeño</span> para alinear el financiamiento con resultados reales en salud.
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 · DESAFÍOS -->
+  <div class="slide" id="s5">
+    <div class="s-tag a1">05 · Desafíos</div>
+    <h2 class="s-title a2">Crisis <span>financiera</span> del SGSSS</h2>
+    <p class="s-sub a3">Problemas estructurales que amenazan la sostenibilidad</p>
+
+    <div class="stat-row a4">
+      <div class="stat-pill"><div class="sp-val" style="color:var(--red)">$32.9B</div><div class="sp-label">Deuda acumulada EPS</div></div>
+      <div class="stat-pill"><div class="sp-val" style="color:var(--red)">110%</div><div class="sp-label">Siniestralidad promedio</div></div>
+      <div class="stat-pill"><div class="sp-val" style="color:var(--orange)">211 días</div><div class="sp-label">Ciclo de recaudo</div></div>
+      <div class="stat-pill"><div class="sp-val" style="color:var(--red)">$15.8B</div><div class="sp-label">Sin trazabilidad</div></div>
+    </div>
+
+    <div class="challenges a5">
+      <div class="ch-card">
+        <div class="ch-num" style="color:var(--red)">01</div>
+        <div class="ch-icon">💸</div>
+        <div class="ch-title">Cartera y Mora</div>
+        <div class="ch-body">EPS adeudan $20.3B a hospitales. El 55% en mora. Compromete la operación de las IPS.</div>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num" style="color:var(--orange)">02</div>
+        <div class="ch-icon">📄</div>
+        <div class="ch-title">Glosas masivas</div>
+        <div class="ch-body">22M de facturas sin procesar en Nueva EPS. El ciclo de recaudo creció de 190 a 211 días.</div>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num" style="color:var(--red)">03</div>
+        <div class="ch-icon">📉</div>
+        <div class="ch-title">Siniestralidad</div>
+        <div class="ch-body">Solo 6 de 29 EPS cumplen indicadores financieros. Patrimonio neto del sector: -$10.2B.</div>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num" style="color:var(--red)">04</div>
+        <div class="ch-icon">🔍</div>
+        <div class="ch-title">Opacidad</div>
+        <div class="ch-body">$15.79B sin trazabilidad (2020-2024). Nueva EPS no publica información financiera desde 2024.</div>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num" style="color:var(--orange)">05</div>
+        <div class="ch-icon">💰</div>
+        <div class="ch-title">UPC Insuficiente</div>
+        <div class="ch-body">La Corte Constitucional advirtió desfinanciación estructural. La prima no cubre el costo real.</div>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num" style="color:var(--red)">06</div>
+        <div class="ch-icon">🏥</div>
+        <div class="ch-title">Crisis Nueva EPS</div>
+        <div class="ch-body">Patrimonio -$6.25B. Deuda creció 198% en 2 años. Hospitales cerraron acceso a afiliados.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6 · CONCLUSIONES -->
+  <div class="slide" id="s6">
+    <div class="s-tag a1">06 · Conclusiones</div>
+    <h2 class="s-title a2">Conclusiones y <span>Recomendaciones</span></h2>
+    <p class="s-sub a3">Hacia un sistema sostenible, equitativo y basado en valor</p>
+
+    <div class="concl-grid a4">
+      <div class="concl-card">
+        <div class="concl-num">Conclusión 01</div>
+        <div class="concl-title">Combinar modalidades es la clave</div>
+        <div class="concl-body">Ningún mecanismo funciona solo. Los sistemas maduros unen lo prospectivo con incentivos al desempeño para lograr eficiencia y calidad.</div>
+      </div>
+      <div class="concl-card">
+        <div class="concl-num">Conclusión 02</div>
+        <div class="concl-title">La crisis es estructural</div>
+        <div class="concl-body">$32.9B de deuda y siniestralidades >100% revelan un modelo de intermediación agotado que exige una reforma de fondo.</div>
+      </div>
+      <div class="concl-card">
+        <div class="concl-num">Recomendación 01</div>
+        <div class="concl-title">Trazabilidad en tiempo real</div>
+        <div class="concl-body">Fortalecer la ADRES con sistemas digitales para rastrear cada peso del SGSSS. Cero tolerancia a los recursos sin justificación.</div>
+      </div>
+      <div class="concl-card">
+        <div class="concl-num">Recomendación 02</div>
+        <div class="concl-title">Apostar por el valor en salud</div>
+        <div class="concl-body">Incorporar el pago por desempeño en todos los contratos. Pagar por resultados clínicos reales, no solo por actividad prestada.</div>
+      </div>
+    </div>
+
+    <div class="a5" style="margin-top:16px;max-width:880px;background:var(--blue-light);border:1.5px solid var(--blue);border-radius:14px;padding:16px 26px;text-align:center;">
+      <span style="font-size:14px;color:var(--blue);font-weight:600;font-style:italic;">"Un sistema de salud sostenible no es el que gasta menos — es el que invierte mejor en las personas."</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<div id="nav">
+  <button class="nb" id="bp" onclick="prev()" disabled>←</button>
+  <div class="dots-row" id="dots"></div>
+  <span id="ctr">1 / 7</span>
+  <button class="nb" id="bn" onclick="next()">→</button>
+</div>
+
+<script>
+/* PARTICLES */
+const C=document.getElementById('canvas'),ctx=C.getContext('2d');
+let W,H,pts=[];
+function resize(){W=C.width=window.innerWidth;H=C.height=window.innerHeight;}
+function initPts(){pts=Array.from({length:40},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:Math.random()*2.5+1}));}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;
+    if(p.y<0||p.y>H)p.vy*=-1;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(26,111,173,0.12)';ctx.fill();
+  });
+  pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(d<100){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(26,111,173,${0.07*(1-d/100)})`;ctx.lineWidth=1;ctx.stroke();}
+  }));
+  requestAnimationFrame(draw);
+}
+resize();initPts();draw();
+window.addEventListener('resize',()=>{resize();initPts();});
+
+/* SLIDES */
+const TOTAL=7;let cur=0;
+const allSl=()=>document.querySelectorAll('.slide');
+const dotsEl=document.getElementById('dots');
+for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='dot'+(i===0?' on':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);}
+
+function goTo(n){
+  const sl=allSl();
+  sl[cur].classList.remove('active');sl[cur].classList.add('out');
+  setTimeout(()=>sl[cur].classList.remove('out'),650);
+  cur=n;sl[cur].classList.add('active');sl[cur].scrollTop=0;
+  updateUI();
+}
+function next(){if(cur<TOTAL-1)goTo(cur+1);}
+function prev(){if(cur>0)goTo(cur-1);}
+function updateUI(){
+  document.getElementById('ctr').textContent=(cur+1)+' / '+TOTAL;
+  document.getElementById('bp').disabled=cur===0;
+  document.getElementById('bn').disabled=cur===TOTAL-1;
+  document.querySelectorAll('.dot').forEach((d,i)=>d.className='dot'+(i===cur?' on':''));
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')next();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')prev();
+});
+
+/* TABS */
+function tab(btn,id){
+  const wrap=btn.closest('.tabs-wrap');
+  wrap.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  wrap.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');document.getElementById(id).classList.add('on');
+}
+</script>
+</body>
+</html>
